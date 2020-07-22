@@ -2,6 +2,25 @@
 
 # MultiConf
 
+## Composer
+
+```json
+{
+    // ... 
+    "repositories": [
+        // ...
+        {
+            "type": "vcs",
+            "url": "https://github.com/yar-lukomsky/multiconf"
+        }
+    ],
+    "require": {
+        // ...
+        "eve-in-ua/multiconf": "dev-master"
+    }
+}
+```
+
 ## Test
 
 `composer test`
