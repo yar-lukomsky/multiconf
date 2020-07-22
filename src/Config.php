@@ -40,7 +40,7 @@ class Config implements IConfig
 
     private function initEnv()
     {
-        $env = file(ENV_ROOT . '/.env');
+        $env = file($this->clearPath(ENV_ROOT . '/.env'));
         $this->env = [];
         foreach ($env as $string) {
             if (trim($string) == '') continue;
@@ -49,7 +49,7 @@ class Config implements IConfig
             $value = trim(implode('=', $parts));
             $this->env[$key] = $value;
         }
-        $envDefault = file(ENV_ROOT . '/.env.default');
+        $envDefault = file($this->clearPath(ENV_ROOT . '/.env.default'));
         foreach ($envDefault as $string) {
             if (trim($string) == '') continue;
             $parts = explode('=', $string);
@@ -77,18 +77,18 @@ class Config implements IConfig
 
     private function initConfig()
     {
-        $configFiles = scandir(CONFIG_ROOT . '/config');
+        $configFiles = scandir($this->clearPath(CONFIG_ROOT . '/config'));
         // Fetch config.
         foreach ($configFiles as $configFile) {
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') > 0) continue;
-            $configHere = include CONFIG_ROOT . '/config/' . $configFile;
+            $configHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
             $keyHere = substr($configFile, 0, -4);
             $this->config[$keyHere] = $configHere;
         }
         // Merge with default config.
         foreach ($configFiles as $configFile) {
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
-            $configDefaultHere = include CONFIG_ROOT . '/config/' . $configFile;
+            $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
             $keyHere = substr($configFile, 0, -12);
             $this->config[$keyHere] = array_replace_recursive($configDefaultHere, $this->config[$keyHere]);
         }
@@ -114,6 +114,11 @@ class Config implements IConfig
         } else {
             return $array[$key];
         }
+    }
+
+    private function clearPath($path)
+    {
+        return str_replace('//', '/', $path);
     }
 
 }
