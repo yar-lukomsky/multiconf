@@ -1,0 +1,33 @@
+{
+  "name": "yar-lukomsky/multiconf",
+  "type": "library",
+  "description": "Library for global configuration.",
+  "keywords": [
+    "config",
+    "eve-in-ua",
+    "multiconf"
+  ],
+  "config": {
+    "platform": {
+      "php": "7.0.33"
+    }
+  },
+  "autoload": {
+    "classmap": [
+      "src/"
+    ]
+  },
+  "minimum-stability": "dev",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Yaroslav Lukomskyi",
+      "email": "yar.lukomsky@gmail.com",
+      "homepage": "https://eve.in.ua",
+      "role": "Developer"
+    }
+  ],
+  "require-dev": {
+    "phpunit/phpunit": "6.5.5"
+  }
+}

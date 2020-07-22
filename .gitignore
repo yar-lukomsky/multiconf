@@ -1,0 +1,8 @@
+.idea
+vendor
+composer.lock
+
+# COPY TO PROJECT .gitignore AND UNCOMMENT
+#.env
+#config/*.php
+#!config/*.default.php
