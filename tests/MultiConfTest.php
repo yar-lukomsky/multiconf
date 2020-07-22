@@ -1,7 +1,5 @@
 <?php
 
-include __DIR__ . '/../autoloader.php';
-
 use PHPUnit\Framework\TestCase;
 
 class MultiConfTest extends TestCase

@@ -1,10 +1,14 @@
+[TOC]
+
 # MultiConf
 
 ## Test
 
-`vendor/bin/phpunit ./tests/MultiConfTest.php`
+`composer test`
 
-## Env examples
+## Examples
+
+### Env
 
 `{ENV_ROOT}/.env`|`{ENV_ROOT}/.env.default`
 ```dotenv
@@ -17,7 +21,7 @@ DB_NAME=database_name
 TABLE_PREFIX=
 ```
 
-## Config example
+### Config
 
 `{CONFIG_ROOT}/config/example.php`|`{CONFIG_ROOT}/config/example.default.php`
 ```php
@@ -35,7 +39,7 @@ return [
 
 ```
 
-## How to get
+### Usage
 
 ```php
 <?php

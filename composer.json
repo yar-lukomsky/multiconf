@@ -13,8 +13,11 @@
     }
   },
   "autoload": {
-    "classmap": [
-      "src/"
+    "psr-4": {"EveInUa\\MultiConf\\": "src/"}
+  },
+  "scripts": {
+    "test": [
+      "vendor/bin/phpunit ./tests/MultiConfTest.php"
     ]
   },
   "minimum-stability": "dev",
