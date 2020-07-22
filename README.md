@@ -1,21 +1,16 @@
-[TOC]
-
 # MultiConf
 
 ## Composer
 
 ```json
 {
-    // ... 
     "repositories": [
-        // ...
         {
             "type": "vcs",
             "url": "https://github.com/yar-lukomsky/multiconf"
         }
     ],
     "require": {
-        // ...
         "eve-in-ua/multiconf": "1.0.0"
     }
 }
@@ -62,7 +57,7 @@ return [
 
 ```php
 <?php
-// You can set directories manually or library with use $_SERVER['DOCUMENT_ROOT'] as CONFIG_ROOT & ENV_ROOT 
+// You can set directories manually for library using $_SERVER['DOCUMENT_ROOT'] as CONFIG_ROOT and ENV_ROOT 
 define('CONFIG_ROOT', __DIR__);
 define('ENV_ROOT', __DIR__);
 $multiConf = new EveInUa\MultiConf\Config();
