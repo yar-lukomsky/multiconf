@@ -16,7 +16,7 @@
     ],
     "require": {
         // ...
-        "eve-in-ua/multiconf": "dev-master"
+        "eve-in-ua/multiconf": "1.0.0"
     }
 }
 ```
