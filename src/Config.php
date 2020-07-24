@@ -46,7 +46,7 @@ class Config implements IConfig
         // ENV
         $envFilePath = $this->clearPath(ENV_ROOT . '/.env');
         if (!file_exists($envFilePath)) {
-            throw new \Exception(self::ENV_FILE_IS_NOT_FOUND);
+            trigger_error(self::ENV_FILE_IS_NOT_FOUND);
         }
         $env = file($this->clearPath(ENV_ROOT . '/.env'));
         $this->env = [];
