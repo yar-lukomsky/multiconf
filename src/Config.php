@@ -41,36 +41,44 @@ class Config implements IConfig
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     private function initEnv()
     {
+        $this->env = [];
+
         // ENV
         $envFilePath = $this->clearPath(ENV_ROOT . '/.env');
-        if (!file_exists($envFilePath)) {
+        if (file_exists($envFilePath)) {
+            $env = file($this->clearPath(ENV_ROOT . '/.env'));
+            foreach ($env as $string) {
+                $string = trim($string);
+                if ($string == '' || substr($string, 0, 1) == '#') continue;
+                $parts = explode('=', $string);
+                $key = trim(array_shift($parts));
+                $value = trim(implode('=', $parts));
+                $this->env[$key] = $value;
+            }
+        } else {
             trigger_error(self::ENV_FILE_IS_NOT_FOUND);
-        }
-        $env = file($this->clearPath(ENV_ROOT . '/.env'));
-        $this->env = [];
-        foreach ($env as $string) {
-            if (trim($string) == '') continue;
-            $parts = explode('=', $string);
-            $key = trim(array_shift($parts));
-            $value = trim(implode('=', $parts));
-            $this->env[$key] = $value;
         }
 
         // ENV DEFAULT
         $envDefaultFilePath = $this->clearPath(ENV_ROOT . '/.env.default');
-        if (!file_exists($envDefaultFilePath)) {
+        if (file_exists($envDefaultFilePath)) {
+            $envDefault = file($this->clearPath(ENV_ROOT . '/.env.default'));
+            foreach ($envDefault as $string) {
+                $string = trim($string);
+                if ($string == '' || substr($string, 0, 1) == '#') continue;
+                $parts = explode('=', $string);
+                $key = trim(array_shift($parts));
+                if (isset($this->env[$key])) continue;
+                $value = trim(implode('=', $parts));
+                $this->env[$key] = $value;
+            }
+        } else {
             throw new \Exception(self::ENV_DEFAULT_FILE_IS_NOT_FOUND);
-        }
-        $envDefault = file($this->clearPath(ENV_ROOT . '/.env.default'));
-        foreach ($envDefault as $string) {
-            if (trim($string) == '') continue;
-            $parts = explode('=', $string);
-            $key = trim(array_shift($parts));
-            if (isset($this->env[$key])) continue;
-            $value = trim(implode('=', $parts));
-            $this->env[$key] = $value;
         }
     }
 
