@@ -116,6 +116,7 @@ class Config implements IConfig
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
             $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
             $keyHere = substr($configFile, 0, -12);
+            $this->config[$keyHere] = $this->config[$keyHere] ?? [];
             $this->config[$keyHere] = array_replace_recursive($configDefaultHere, $this->config[$keyHere]);
         }
     }

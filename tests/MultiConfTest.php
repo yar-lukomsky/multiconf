@@ -78,4 +78,19 @@ class MultiConfTest extends TestCase
         $this->multiConf->config('failed');
         $this->multiConf->config('example.failed');
     }
+
+    public function testConfigDefaultOnly()
+    {
+
+        $configDefaultAsFile = include CONFIG_ROOT . '/config/example2.default.php';
+
+        $this->assertSame(
+            $configDefaultAsFile['foo'],
+            $this->multiConf->config('example2.foo')
+        );
+        $this->assertSame(
+            $configDefaultAsFile['bar'],
+            $this->multiConf->config('example2.bar')
+        );
+    }
 }
