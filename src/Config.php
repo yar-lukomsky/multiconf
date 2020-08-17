@@ -2,6 +2,8 @@
 
 namespace EveInUa\MultiConf;
 
+use \Exception;
+
 class Config implements IConfig
 {
     const ENV_KEY_IS_NOT_FOUND = 'Env key is not found.';
@@ -9,6 +11,8 @@ class Config implements IConfig
     const ENV_DEFAULT_FILE_IS_NOT_FOUND = '.env.default file is not found.';
     const CONFIG_KEY_IS_NOT_FOUND = 'Config key is not found.';
     const CONFIG_DIR_IS_NOT_FOUND = 'Config folder is not found.';
+
+    const CONFIG_DEFAULT_VALUE = 'ecb902b728093cd0c652cfa78bdd8c97';
 
     private $env;
     private $config;
@@ -26,23 +30,26 @@ class Config implements IConfig
     /**
      * Returns env variable from ENV_ROOT/.env (or .env.default)
      * @param string $key
+     * @param string $default
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
-    public function env($key = 'ENV')
+    public function env($key = 'ENV', $default = self::CONFIG_DEFAULT_VALUE)
     {
         if (!$this->env) {
             $this->initEnv();
         }
         if (isset($this->env[$key])) {
             return $this->env[$key];
+        } elseif ($default != self::CONFIG_DEFAULT_VALUE) {
+            return $default;
         } else {
-            throw new \Exception(self::ENV_KEY_IS_NOT_FOUND);
+            throw new Exception(self::ENV_KEY_IS_NOT_FOUND);
         }
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function init()
     {
@@ -55,7 +62,7 @@ class Config implements IConfig
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     private function initEnv()
     {
@@ -91,30 +98,38 @@ class Config implements IConfig
                 $this->env[$key] = $value;
             }
         } else {
-            throw new \Exception(self::ENV_DEFAULT_FILE_IS_NOT_FOUND);
+            throw new Exception(self::ENV_DEFAULT_FILE_IS_NOT_FOUND);
         }
     }
 
     /**
      * Returns config value from CONFIG_ROOT/config directory.
      * @param $keyPathDotNotation
+     * @param string $default
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
-    public function config($keyPathDotNotation)
+    public function config($keyPathDotNotation, $default = self::CONFIG_DEFAULT_VALUE)
     {
         if (!$this->config) {
             $this->initConfig();
         }
 
-        return $this->lodashGet($this->config, $keyPathDotNotation);
+        try {
+            return $this->lodashGet($this->config, $keyPathDotNotation);
+        } catch (Exception $exception) {
+            if ($default != self::CONFIG_DEFAULT_VALUE) {
+                return $default;
+            }
+            throw $exception;
+        }
     }
 
     private function initConfig()
     {
         $configFilesPath = $this->clearPath(CONFIG_ROOT . '/config');
         if (!file_exists($configFilesPath)) {
-            throw new \Exception(self::CONFIG_DIR_IS_NOT_FOUND);
+            throw new Exception(self::CONFIG_DIR_IS_NOT_FOUND);
         }
         $configFiles = scandir($this->clearPath(CONFIG_ROOT . '/config'));
         // Fetch config.
@@ -138,7 +153,7 @@ class Config implements IConfig
      * @param $array - nested array
      * @param $path - dot notation path
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     private function lodashGet($array, $path)
     {
@@ -146,7 +161,7 @@ class Config implements IConfig
         $key = array_shift($pathParts);
 
         if (!isset($array[$key])) {
-            throw new \Exception(self::CONFIG_KEY_IS_NOT_FOUND);
+            throw new Exception(self::CONFIG_KEY_IS_NOT_FOUND);
         }
 
         if (count($pathParts) > 0) {
