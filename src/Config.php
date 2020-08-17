@@ -30,17 +30,18 @@ class Config implements IConfig
     /**
      * Returns env variable from ENV_ROOT/.env (or .env.default)
      * @param string $key
+     * @param bool $smartTransform - transform boolean values as strings to boolean type values
      * @param string $default
      * @return mixed
      * @throws Exception
      */
-    public function env($key = 'ENV',$default = self::CONFIG_DEFAULT_VALUE)
+    public function env($key = 'ENV', $smartTransform = true, $default = self::CONFIG_DEFAULT_VALUE)
     {
         if (!$this->env) {
             $this->initEnv();
         }
         if (isset($this->env[$key])) {
-            return $this->env[$key];
+            return $smartTransform ? $this->transformStringValue($this->env[$key]) : $this->env[$key];
         } elseif ($default != self::CONFIG_DEFAULT_VALUE) {
             return $default;
         } else {
