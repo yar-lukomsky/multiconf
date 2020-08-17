@@ -34,7 +34,7 @@ class Config implements IConfig
      * @return mixed
      * @throws Exception
      */
-    public function env($key = 'ENV', $default = self::CONFIG_DEFAULT_VALUE)
+    public function env($key = 'ENV',$default = self::CONFIG_DEFAULT_VALUE)
     {
         if (!$this->env) {
             $this->initEnv();
@@ -174,6 +174,23 @@ class Config implements IConfig
     private function clearPath($path)
     {
         return str_replace('//', '/', $path);
+    }
+
+    /**
+     * Transform boolean values as strings to boolean type values.
+     * @param $value
+     * @return bool
+     */
+    public function transformStringValue($value)
+    {
+        switch ($value) {
+            case 'true':
+                return true;
+            case 'false':
+                return false;
+            default:
+                return $value;
+        }
     }
 
 }
