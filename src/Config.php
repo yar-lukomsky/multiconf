@@ -44,6 +44,19 @@ class Config implements IConfig
     /**
      * @throws \Exception
      */
+    public function init()
+    {
+        if (!$this->env) {
+            $this->initEnv();
+        }
+        if (!$this->env) {
+            $this->initConfig();
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
     private function initEnv()
     {
         $this->env = [];
