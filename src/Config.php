@@ -184,14 +184,22 @@ class Config implements IConfig
      */
     public function transformStringValue($value)
     {
+        // JSON
+        $newValue = @json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $newValue;
+        }
+
+        // BOOL
         switch ($value) {
             case 'true':
                 return true;
             case 'false':
                 return false;
-            default:
-                return $value;
         }
+
+        // DEFAULT
+        return $value;
     }
 
 }

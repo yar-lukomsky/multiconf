@@ -93,4 +93,16 @@ class MultiConfTest extends TestCase
             $this->multiConf->config('example2.bar')
         );
     }
+
+    public function testEnvJson()
+    {
+        $SOME_JSON = $this->multiConf->env('SOME_JSON');
+        $this->assertSame(['foo', 'bar'], $SOME_JSON);
+    }
+
+    public function testEnvJsonException()
+    {
+        $SOME_JSON = $this->multiConf->env('SOME_JSON');
+        $this->assertNotSame(['foo', 'baz'], $SOME_JSON);
+    }
 }
