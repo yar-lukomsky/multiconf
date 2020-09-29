@@ -33,7 +33,7 @@ class Config implements IConfig
      * @param bool $smartTransform - transform boolean values as strings to boolean type values
      * @param string $default
      * @return mixed
-     * @throws Exception
+     * @throws Exception only if $key is not found (use $default to prevent throw)
      */
     public function env($key = 'ENV', $smartTransform = true, $default = self::CONFIG_DEFAULT_VALUE)
     {
@@ -108,7 +108,7 @@ class Config implements IConfig
      * @param $keyPathDotNotation
      * @param string $default
      * @return mixed
-     * @throws Exception
+     * @throws Exception only if $keyPathDotNotation is not found (use $default to prevent throw)
      */
     public function config($keyPathDotNotation, $default = self::CONFIG_DEFAULT_VALUE)
     {
