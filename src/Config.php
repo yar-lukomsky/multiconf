@@ -223,4 +223,40 @@ class Config implements IConfig
         return $value;
     }
 
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isDev()
+    {
+        return strtolower($this->env('ENV')) == 'dev' || strtolower($this->env('ENV')) == 'loc';
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isTest()
+    {
+        return strtolower($this->env('ENV')) == 'test';
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isStage()
+    {
+        return strtolower($this->env('ENV')) == 'stage' || strtolower($this->env('ENV')) == 'staging';
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isProd()
+    {
+        return strtolower($this->env('ENV')) == 'prod' || strtolower($this->env('ENV')) == 'production' || strtolower($this->env('ENV')) == 'live';
+    }
+
 }
