@@ -17,6 +17,9 @@ class Config implements IConfig
     private $env;
     private $config;
 
+    /**
+     * Config constructor.
+     */
     public function __construct()
     {
         if (!defined('CONFIG_ROOT')) {
@@ -25,6 +28,24 @@ class Config implements IConfig
         if (!defined('ENV_ROOT')) {
             define('ENV_ROOT', $_SERVER['DOCUMENT_ROOT']);
         }
+    }
+
+    /**
+     * Config root.
+     * @return string
+     */
+    public function configRoot()
+    {
+        return CONFIG_ROOT;
+    }
+
+    /**
+     * ENV root.
+     * @return string
+     */
+    public function envRoot()
+    {
+        return ENV_ROOT;
     }
 
     /**
