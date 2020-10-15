@@ -23,10 +23,10 @@ class Config implements IConfig
     public function __construct()
     {
         if (!defined('CONFIG_ROOT')) {
-            define('CONFIG_ROOT', $_SERVER['DOCUMENT_ROOT']);
+            define('CONFIG_ROOT', !empty($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : $_SERVER['PWD']);
         }
         if (!defined('ENV_ROOT')) {
-            define('ENV_ROOT', $_SERVER['DOCUMENT_ROOT']);
+            define('ENV_ROOT', !empty($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : $_SERVER['PWD']);
         }
     }
 
