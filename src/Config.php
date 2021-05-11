@@ -6,10 +6,10 @@ use \Exception;
 
 class Config implements IConfig
 {
-    const ENV_KEY_IS_NOT_FOUND = 'Env key is not found.';
+    const ENV_KEY_IS_NOT_FOUND = 'Env key `%s` is not found.';
     const ENV_FILE_IS_NOT_FOUND = '.env file is not found.';
     const ENV_DEFAULT_FILE_IS_NOT_FOUND = '.env.default file is not found.';
-    const CONFIG_KEY_IS_NOT_FOUND = 'Config key is not found.';
+    const CONFIG_KEY_IS_NOT_FOUND = 'Config key `%s` of path `%s` is not found.';
     const CONFIG_DIR_IS_NOT_FOUND = 'Config folder is not found.';
 
     const CONFIG_DEFAULT_VALUE = 'ecb902b728093cd0c652cfa78bdd8c97';
@@ -66,7 +66,7 @@ class Config implements IConfig
         } elseif ($default != self::CONFIG_DEFAULT_VALUE) {
             return $default;
         } else {
-            throw new Exception(self::ENV_KEY_IS_NOT_FOUND);
+            throw new Exception(sprintf(self::ENV_KEY_IS_NOT_FOUND, $key));
         }
     }
 
@@ -183,7 +183,7 @@ class Config implements IConfig
         $key = array_shift($pathParts);
 
         if (!isset($array[$key])) {
-            throw new Exception(self::CONFIG_KEY_IS_NOT_FOUND);
+            throw new Exception(sprintf(self::CONFIG_KEY_IS_NOT_FOUND, $key, $path));
         }
 
         if (count($pathParts) > 0) {
