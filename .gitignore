@@ -3,6 +3,8 @@ vendor
 composer.lock
 
 # COPY TO PROJECT .gitignore AND UNCOMMENT
-#.env
-#config/*.php
-#!config/*.default.php
+#/.env
+#/config/*.php
+#/!config/*.default.php
+#/config/*.json
+#/!config/*.default.json
