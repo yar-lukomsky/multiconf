@@ -16,6 +16,22 @@
 }
 ```
 
+OR
+
+```json
+{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:yar-lukomsky/multiconf.git"
+        }
+    ],
+    "require": {
+        "eve-in-ua/multiconf": "1.0.0"
+    }
+}
+```
+
 ## Test
 
 `composer test`
