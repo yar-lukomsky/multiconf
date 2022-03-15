@@ -2,32 +2,16 @@
 
 ## Composer
 
-```json
-{
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/yar-lukomsky/multiconf"
-        }
-    ],
-    "require": {
-        "eve-in-ua/multiconf": "1.0.0"
-    }
-}
+```
+composer require eve-in-ua/multiconf
 ```
 
 OR
 
 ```json
 {
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "git@github.com:yar-lukomsky/multiconf.git"
-        }
-    ],
     "require": {
-        "eve-in-ua/multiconf": "1.0.0"
+        "eve-in-ua/multiconf": "^v1.0.0"
     }
 }
 ```
@@ -40,25 +24,34 @@ OR
 
 ### Env
 
-`{ENV_ROOT}/.env`|`{ENV_ROOT}/.env.default`
+`{ENV_ROOT}/.env`
 ```dotenv
-ENV=PROD
+ENV=DEV
 DB_HOST=localhost
-DB_PORT=3306
 DB_USER=user_name
 DB_PASS=password
 DB_NAME=database_name
+
+```
+
+`{ENV_ROOT}/.env.default`
+```dotenv
+ENV=PROD
+DB_HOST=
+DB_PORT=3306
+DB_USER=
+DB_PASS=
+DB_NAME=
 TABLE_PREFIX=
 ```
 
 ### Config
 
-`{CONFIG_ROOT}/config/example.php`|`{CONFIG_ROOT}/config/example.default.php`
+`{CONFIG_ROOT}/config/example.php`
 ```php
 <?php
 
 return [
-    0 => 'fuu',
     'foo' => 'bar',
     'zoo' => [
         'baz', // 0 => 'baz'
@@ -66,7 +59,17 @@ return [
     ],
 
 ];
+```
 
+
+`{CONFIG_ROOT}/config/example.default.php`
+```php
+<?php
+
+return [
+    'foo' => 'baz',
+    'def' => 'def',
+];
 ```
 
 ### Usage
@@ -76,6 +79,7 @@ return [
 // You can set directories manually for library using $_SERVER['DOCUMENT_ROOT'] as CONFIG_ROOT and ENV_ROOT 
 define('CONFIG_ROOT', __DIR__);
 define('ENV_ROOT', __DIR__);
+require_once __DIR__ . '/vendor/autoload.php';
 $multiConf = new EveInUa\MultiConf\Config();
 $result = [
     $multiConf->env(),                  // DEV       - from ENV_ROOT/.env
