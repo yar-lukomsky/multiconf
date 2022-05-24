@@ -151,7 +151,8 @@ class Config implements IConfig
     {
         $configFilesPath = $this->clearPath(CONFIG_ROOT . '/config');
         if (!file_exists($configFilesPath)) {
-            throw new Exception(self::CONFIG_DIR_IS_NOT_FOUND);
+            $this->config = [];
+            return;
         }
         $configFiles = scandir($this->clearPath(CONFIG_ROOT . '/config'));
         // Fetch config.
