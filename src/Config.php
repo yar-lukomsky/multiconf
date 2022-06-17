@@ -159,21 +159,29 @@ class Config implements IConfig
     {
         $configFilesPath = $this->clearPath(CONFIG_ROOT . '/config');
         if (!file_exists($configFilesPath)) {
-            throw new Exception(self::CONFIG_DIR_IS_NOT_FOUND);
+            $this->config = [];
+            return;
         }
         $configFiles = scandir($this->clearPath(CONFIG_ROOT . '/config'));
         // Fetch config.
         foreach ($configFiles as $configFile) {
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') > 0) continue;
             $configHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
-            $keyHere = substr($configFile, 0, -4);
+            $partsHere = explode('.', $configFile);
+            $ext = array_pop($partsHere);
+            $configHere = $ext == 'json' ? json_decode($configHere, true) : $configHere;
+            $keyHere = implode('.', $partsHere);
             $this->config[$keyHere] = $configHere;
         }
         // Merge with default config.
         foreach ($configFiles as $configFile) {
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
             $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
-            $keyHere = substr($configFile, 0, -12);
+            $configFile = str_replace('.default.', '.', $configFile);
+            $partsHere = explode('.', $configFile);
+            $ext = array_pop($partsHere);
+            $configDefaultHere = $ext == 'json' ? json_decode($configDefaultHere, true) : $configDefaultHere;
+            $keyHere = implode('.', $partsHere);
             $this->config[$keyHere] = $this->config[$keyHere] ?? [];
             $this->config[$keyHere] = array_replace_recursive($configDefaultHere, $this->config[$keyHere]);
         }
