@@ -16,6 +16,7 @@ class Config implements IConfig
 
     private $env;
     private $config;
+    private $waitList = [];
 
     /**
      * Config constructor.
@@ -73,12 +74,12 @@ class Config implements IConfig
     /**
      * @throws Exception
      */
-    public function init()
+    public function init($forceReload = false)
     {
-        if (!$this->env) {
+        if (!$this->env || $forceReload) {
             $this->initEnv();
         }
-        if (!$this->env) {
+        if (!$this->config || $forceReload) {
             $this->initConfig();
         }
     }
@@ -133,7 +134,14 @@ class Config implements IConfig
      */
     public function config($keyPathDotNotation, $default = self::CONFIG_DEFAULT_VALUE)
     {
-        if (!$this->config) {
+        /**
+         * If your `current-config` want to use `another-config` - you need to wait for it and return null while waiting.
+         *
+         * Add the next example at the beginning of the config.
+         * @example if (self::waitFor('current-config', ['env', 'another-config'])) { return null; }
+         */
+        $keyPathDotNotationParts = explode('.', $keyPathDotNotation);
+        if (!$this->config || !$this->config[reset($keyPathDotNotationParts)]) {
             $this->initConfig();
         }
 
@@ -151,29 +159,21 @@ class Config implements IConfig
     {
         $configFilesPath = $this->clearPath(CONFIG_ROOT . '/config');
         if (!file_exists($configFilesPath)) {
-            $this->config = [];
-            return;
+            throw new Exception(self::CONFIG_DIR_IS_NOT_FOUND);
         }
         $configFiles = scandir($this->clearPath(CONFIG_ROOT . '/config'));
         // Fetch config.
         foreach ($configFiles as $configFile) {
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') > 0) continue;
             $configHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
-            $partsHere = explode('.', $configFile);
-            $ext = array_pop($partsHere);
-            $configHere = $ext == 'json' ? json_decode($configHere, true) : $configHere;
-            $keyHere = implode('.', $partsHere);
+            $keyHere = substr($configFile, 0, -4);
             $this->config[$keyHere] = $configHere;
         }
         // Merge with default config.
         foreach ($configFiles as $configFile) {
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
             $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
-            $configFile = str_replace('.default.', '.', $configFile);
-            $partsHere = explode('.', $configFile);
-            $ext = array_pop($partsHere);
-            $configDefaultHere = $ext == 'json' ? json_decode($configDefaultHere, true) : $configDefaultHere;
-            $keyHere = implode('.', $partsHere);
+            $keyHere = substr($configFile, 0, -12);
             $this->config[$keyHere] = $this->config[$keyHere] ?? [];
             $this->config[$keyHere] = array_replace_recursive($configDefaultHere, $this->config[$keyHere]);
         }
@@ -265,6 +265,37 @@ class Config implements IConfig
     public function isProd()
     {
         return strtolower($this->env('ENV')) == 'prod' || strtolower($this->env('ENV')) == 'production' || strtolower($this->env('ENV')) == 'live';
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function waitFor($currentConfigKey, $waitForKey = [])
+    {
+        $this->waitList[$currentConfigKey] = $this->waitList[$currentConfigKey] ?? [];
+        $this->waitList[$currentConfigKey] = array_merge($this->waitList[$currentConfigKey], is_array($waitForKey) ? $waitForKey : [$waitForKey]);
+        $this->waitList[$currentConfigKey] = array_unique($this->waitList[$currentConfigKey]);
+
+        return $this->needWait($currentConfigKey);
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    private function needWait($currentConfigKey)
+    {
+        $needWait = false;
+        foreach ($this->waitList[$currentConfigKey] as $waitFor) {
+            if ($waitFor == 'env') {
+                $needWait = $needWait || is_null($this->env);
+            } elseif (is_null($this->config[$waitFor])) {
+                $needWait = true;
+            }
+        }
+
+        return $needWait;
     }
 
 }
