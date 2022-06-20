@@ -141,7 +141,7 @@ class Config implements IConfig
          * @example if (self::waitFor('current-config', ['env', 'another-config'])) { return null; }
          */
         $keyPathDotNotationParts = explode('.', $keyPathDotNotation);
-        if (!$this->config || !$this->config[reset($keyPathDotNotationParts)]) {
+        if (!$this->config || !($this->config[reset($keyPathDotNotationParts)] ?? false)) {
             $this->initConfig();
         }
 
@@ -177,13 +177,14 @@ class Config implements IConfig
         foreach ($configFiles as $configFile) {
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
             $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            if (is_null($configDefaultHere)) continue;
             $configFile = str_replace('.default.', '.', $configFile);
             $partsHere = explode('.', $configFile);
             $ext = array_pop($partsHere);
             $configDefaultHere = $ext == 'json' ? json_decode($configDefaultHere, true) : $configDefaultHere;
             $keyHere = implode('.', $partsHere);
             $this->config[$keyHere] = $this->config[$keyHere] ?? [];
-            $this->config[$keyHere] = array_replace_recursive($configDefaultHere, $this->config[$keyHere]);
+            $this->config[$keyHere] = array_replace_recursive($configDefaultHere ?? [], $this->config[$keyHere]);
         }
     }
 
@@ -298,7 +299,7 @@ class Config implements IConfig
         foreach ($this->waitList[$currentConfigKey] as $waitFor) {
             if ($waitFor == 'env') {
                 $needWait = $needWait || is_null($this->env);
-            } elseif (is_null($this->config[$waitFor])) {
+            } elseif (is_null($this->config) || is_null($this->config[$waitFor] ?? null)) {
                 $needWait = true;
             }
         }
