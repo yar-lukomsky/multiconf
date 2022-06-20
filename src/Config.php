@@ -4,15 +4,18 @@ namespace EveInUa\MultiConf;
 
 use \Exception;
 
-class Config implements IConfig
+class Config extends SingletonAbstract implements IConfig
 {
     const ENV_KEY_IS_NOT_FOUND = 'Env key `%s` is not found.';
     const ENV_FILE_IS_NOT_FOUND = '.env file is not found.';
     const ENV_DEFAULT_FILE_IS_NOT_FOUND = '.env.default file is not found.';
     const CONFIG_KEY_IS_NOT_FOUND = 'Config key `%s` of path `%s` is not found.';
     const CONFIG_DIR_IS_NOT_FOUND = 'Config folder is not found.';
+    const ERROR_TOO_MANY_NESTING = 'Too many config nesting.';
 
     const CONFIG_DEFAULT_VALUE = 'ecb902b728093cd0c652cfa78bdd8c97';
+
+    const CONFIG_NESTING_THRESHOLD = 10;
 
     private static $init = false;
     private static $env;
@@ -22,7 +25,7 @@ class Config implements IConfig
     /**
      * Config constructor.
      */
-    public function __construct()
+    public function boot()
     {
         if (!defined('CONFIG_ROOT')) {
             define('CONFIG_ROOT', !empty($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : $_SERVER['PWD']);
@@ -160,7 +163,7 @@ class Config implements IConfig
         }
     }
 
-    private function initConfig()
+    private function initConfig($reloadCount = 0)
     {
         $configFilesPath = $this->clearPath(CONFIG_ROOT . '/config');
         if (!file_exists($configFilesPath)) {
@@ -180,7 +183,6 @@ class Config implements IConfig
                 if ($count < 2 * $configFilesCount) {
                     $configFiles[] = $configFile;
                 }
-                continue;
             }
             $partsHere = explode('.', $configFile);
             $ext = array_pop($partsHere);
@@ -195,12 +197,11 @@ class Config implements IConfig
             $configFile = array_shift($configFiles);
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
             $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
-            if (is_null($configHere)) {
+            if (is_null($configDefaultHere)) {
                 $count++;
                 if ($count < 2 * $configFilesCount) {
                     $configFiles[] = $configFile;
                 }
-                continue;
             }
             $configFile = str_replace('.default.', '.', $configFile);
             $partsHere = explode('.', $configFile);
@@ -209,6 +210,17 @@ class Config implements IConfig
             $keyHere = implode('.', $partsHere);
             self::$config[$keyHere] = self::$config[$keyHere] ?? [];
             self::$config[$keyHere] = array_replace_recursive($configDefaultHere ?? [], self::$config[$keyHere]);
+        }
+
+        /**
+         * Handle using config in another config.
+         * @see Config::waitFor
+         */
+        if ($reloadCount > $this->getThresholdNestingNumber()) {
+            throw new \Exception(self::ERROR_TOO_MANY_NESTING);
+        }
+        if (in_array(null, self::$config)) {
+            $this->initConfig($reloadCount + 1);
         }
     }
 
@@ -224,8 +236,6 @@ class Config implements IConfig
         $key = array_shift($pathParts);
 
         if (!isset($array[$key])) {
-            echo json_encode(debug_backtrace(), true);
-            exit();
             throw new Exception(sprintf(self::CONFIG_KEY_IS_NOT_FOUND, $key, $path));
         }
 
@@ -331,6 +341,11 @@ class Config implements IConfig
         }
 
         return $needWait;
+    }
+
+    private function getThresholdNestingNumber()
+    {
+        return $this->env('CONFIG_NESTING_THRESHOLD', true, self::CONFIG_NESTING_THRESHOLD);
     }
 
 }

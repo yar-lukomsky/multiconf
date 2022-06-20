@@ -1,11 +1,12 @@
 <?php
 
 return [
-    0 => 'fuu-def',
-    'foo' => 'bar-def',
+    0 => 'fuu-default',
+    'foo' => 'bar-default',
     'zoo' => [
-        'baz-def', // 0 => 'baz-def'
-        'buzz' => 'buzz-def',
+        'baz-default', // 0 => 'baz-default'
+        'buzz' => 'buzz-default',
+        // TODO: implement cascade merging (with ability to disable it in ENV)
     ],
-    'def' => 'def'
+    'default' => 'default'
 ];
