@@ -5,7 +5,5 @@ return [
     'foo' => 'bar',
     'zoo' => [
         'baz', // 0 => 'baz'
-
     ],
-
 ];

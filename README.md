@@ -72,13 +72,28 @@ return [
 ];
 ```
 
+`{CONFIG_ROOT}/config/a-first-config.php`
+```php
+<?php
+$multiConf = new EveInUa\MultiConf\Config();
+
+// Wait for `example2` to load:
+if ($multiConf->waitFor('a-first-config', ['env', 'example2'])) { return null; }
+
+return [
+    'foo' => 'baz',
+    'def' => 'def',
+    'example2-data' => $multiConf->config('example2'),
+];
+```
+
 ### Usage
 
 ```php
 <?php
 // You can set directories manually for library using $_SERVER['DOCUMENT_ROOT'] as CONFIG_ROOT and ENV_ROOT 
-define('CONFIG_ROOT', __DIR__);
-define('ENV_ROOT', __DIR__);
+define('CONFIG_ROOT', __DIR__); // optional, will use DOCUMENT_ROOT instead
+define('ENV_ROOT', __DIR__); // optional, will use DOCUMENT_ROOT instead
 require_once __DIR__ . '/vendor/autoload.php';
 $multiConf = new EveInUa\MultiConf\Config();
 $result = [
@@ -89,4 +104,14 @@ $result = [
     $multiConf->config('example.def'),  // def       - from CONFIG_ROOT/config/example.default.php
 ];
 var_dump($result);
+```
+Output:
+```
+array(5) {
+  [0]=> string(3) "DEV"
+  [1]=> string(9) "localhost"
+  [2]=> int(3306)
+  [3]=> string(3) "bar"
+  [4]=> string(3) "def"
+}
 ```
