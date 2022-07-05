@@ -225,22 +225,24 @@ class Config extends SingletonAbstract implements IConfig
     }
 
     /**
-     * @param $array - nested array
-     * @param $path - dot notation path
+     * @param array $array - nested array
+     * @param string $path - dot notation path
+     * @param string|null $fullPath - dot notation path: passed through all calls,
+     *                                for "exception throw" when it will be thrown
      * @return mixed
      * @throws Exception
      */
-    private function lodashGet($array, $path)
+    private function lodashGet($array, $path, $fullPath = null)
     {
         $pathParts = explode('.', $path);
         $key = array_shift($pathParts);
 
         if (!isset($array[$key])) {
-            throw new Exception(sprintf(self::CONFIG_KEY_IS_NOT_FOUND, $key, $path));
+            throw new Exception(sprintf(self::CONFIG_KEY_IS_NOT_FOUND, $key, $fullPath ?? $path));
         }
 
         if (count($pathParts) > 0) {
-            return $this->lodashGet($array[$key], implode('.', $pathParts));
+            return $this->lodashGet($array[$key], implode('.', $pathParts), $fullPath ?? $path);
         } else {
             return $array[$key];
         }
