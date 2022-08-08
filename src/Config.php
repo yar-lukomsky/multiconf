@@ -327,6 +327,11 @@ class Config extends SingletonAbstract implements IConfig
         return $this->needWait($currentConfigKey);
     }
 
+    public function getEnvKeys()
+    {
+        return array_keys(self::$env);
+    }
+
     /**
      * @return bool
      * @throws \Exception
