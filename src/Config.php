@@ -282,9 +282,18 @@ class Config extends SingletonAbstract implements IConfig
      * @return bool
      * @throws \Exception
      */
+    public function isLoc()
+    {
+        return strtolower($this->env('ENV')) == 'loc';
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
     public function isDev()
     {
-        return strtolower($this->env('ENV')) == 'dev' || strtolower($this->env('ENV')) == 'loc';
+        return strtolower($this->env('ENV')) == 'dev';
     }
 
     /**
@@ -293,7 +302,7 @@ class Config extends SingletonAbstract implements IConfig
      */
     public function isTest()
     {
-        return strtolower($this->env('ENV')) == 'test';
+        return strtolower($this->env('ENV')) == 'test' || strtolower($this->env('ENV')) == 'testing';
     }
 
     /**
