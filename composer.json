@@ -13,7 +13,10 @@
     }
   },
   "autoload": {
-    "psr-4": {"EveInUa\\MultiConf\\": "src/"}
+    "psr-4": {
+      "EveInUa\\MultiConf\\": "src/",
+      "": "src/"
+    }
   },
   "scripts": {
     "test": [
