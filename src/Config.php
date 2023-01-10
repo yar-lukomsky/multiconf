@@ -157,7 +157,7 @@ class Config extends SingletonAbstract implements IConfig
         try {
             return $this->lodashGet(self::$config, $keyPathDotNotation);
         } catch (Exception $exception) {
-            if ($default != self::CONFIG_DEFAULT_VALUE) {
+            if ($default !== self::CONFIG_DEFAULT_VALUE) {
                 return $default;
             }
             throw $exception;
