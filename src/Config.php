@@ -72,7 +72,7 @@ class Config extends SingletonAbstract implements IConfig
         }
         if (isset(self::$env[$key])) {
             return $smartTransform ? $this->transformStringValue(self::$env[$key]) : self::$env[$key];
-        } elseif ($default != self::CONFIG_DEFAULT_VALUE) {
+        } elseif ($default !== self::CONFIG_DEFAULT_VALUE) {
             return $default;
         } else {
             throw new Exception(sprintf(self::ENV_KEY_IS_NOT_FOUND, $key));
