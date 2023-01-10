@@ -70,6 +70,7 @@ class Config extends SingletonAbstract implements IConfig
         if (!self::$env) {
             $this->initEnv();
         }
+
         if (isset(self::$env[$key])) {
             return $smartTransform ? $this->transformStringValue(self::$env[$key]) : self::$env[$key];
         } elseif ($default !== self::CONFIG_DEFAULT_VALUE) {
@@ -177,7 +178,12 @@ class Config extends SingletonAbstract implements IConfig
         while (!empty($configFiles)) {
             $configFile = array_shift($configFiles);
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') > 0) continue;
-            $configHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            $isPhp = substr($configFile, -4) == '.php';
+            if ($isPhp) {
+                $configHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            } else {
+                $configHere = file_get_contents($this->clearPath(CONFIG_ROOT . '/config/' . $configFile));
+            }
             if (is_null($configHere)) {
                 $count++;
                 if ($count < 2 * $configFilesCount) {
@@ -196,7 +202,12 @@ class Config extends SingletonAbstract implements IConfig
         while (!empty($configFiles)) {
             $configFile = array_shift($configFiles);
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
-            $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            $isPhp = substr($configFile, -4) == '.php';
+            if ($isPhp) {
+                $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            } else {
+                $configDefaultHere = file_get_contents($this->clearPath(CONFIG_ROOT . '/config/' . $configFile));
+            }
             if (is_null($configDefaultHere)) {
                 $count++;
                 if ($count < 2 * $configFilesCount) {
@@ -219,7 +230,11 @@ class Config extends SingletonAbstract implements IConfig
         if ($reloadCount > $this->getThresholdNestingNumber()) {
             throw new \Exception(self::ERROR_TOO_MANY_NESTING);
         }
-        if (in_array(null, self::$config)) {
+        $hasWaitingConfigs = false;
+        foreach (self::$config as $configValue) {
+            if (is_null($configValue)) $hasWaitingConfigs = true;
+        }
+        if ($hasWaitingConfigs) {
             $this->initConfig($reloadCount + 1);
         }
     }
