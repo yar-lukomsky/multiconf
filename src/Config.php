@@ -21,6 +21,8 @@ class Config extends SingletonAbstract implements IConfig
     private static $env;
     private static $config;
     private static $waitList = [];
+    private static $loadedDefaultConfigs = [];
+    private static $loadedOverrideConfigs = [];
 
     /**
      * Config constructor.
@@ -73,7 +75,6 @@ class Config extends SingletonAbstract implements IConfig
         if (!self::$env) {
             $this->initEnv();
         }
-
         if (isset(self::$env[$key])) {
             return $smartTransform ? $this->transformStringValue(self::$env[$key]) : self::$env[$key];
         } elseif ($default !== self::CONFIG_DEFAULT_VALUE) {
@@ -182,10 +183,11 @@ class Config extends SingletonAbstract implements IConfig
         $count = 0;
         while (!empty($configFiles)) {
             $configFile = array_shift($configFiles);
+            if (in_array($configFile, self::$loadedDefaultConfigs)) continue;
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') > 0) continue;
             $isPhp = substr($configFile, -4) == '.php';
             if ($isPhp) {
-                $configHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            $configHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
             } else {
                 $configHere = file_get_contents($this->clearPath(CONFIG_ROOT . '/config/' . $configFile));
             }
@@ -200,16 +202,18 @@ class Config extends SingletonAbstract implements IConfig
             $configHere = $ext == 'json' ? json_decode($configHere, true) : $configHere;
             $keyHere = implode('.', $partsHere);
             self::$config[$keyHere] = $configHere;
+            self::$loadedDefaultConfigs[] = $configFile;
         }
 
         $configFiles = scandir($this->clearPath(CONFIG_ROOT . '/config'));
         // Merge with default config.
         while (!empty($configFiles)) {
             $configFile = array_shift($configFiles);
+            if (in_array($configFile, self::$loadedOverrideConfigs)) continue;
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
             $isPhp = substr($configFile, -4) == '.php';
             if ($isPhp) {
-                $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
             } else {
                 $configDefaultHere = file_get_contents($this->clearPath(CONFIG_ROOT . '/config/' . $configFile));
             }
@@ -226,6 +230,7 @@ class Config extends SingletonAbstract implements IConfig
             $keyHere = implode('.', $partsHere);
             self::$config[$keyHere] = self::$config[$keyHere] ?? [];
             self::$config[$keyHere] = array_replace_recursive($configDefaultHere ?? [], self::$config[$keyHere]);
+            self::$loadedOverrideConfigs[] = $configFile;
         }
 
         /**
