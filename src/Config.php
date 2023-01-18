@@ -41,6 +41,7 @@ class Config extends SingletonAbstract implements IConfig
 
     /**
      * Config root.
+     *
      * @return string
      */
     public function configRoot()
@@ -50,6 +51,7 @@ class Config extends SingletonAbstract implements IConfig
 
     /**
      * ENV root.
+     *
      * @return string
      */
     public function envRoot()
@@ -59,6 +61,7 @@ class Config extends SingletonAbstract implements IConfig
 
     /**
      * Returns env variable from ENV_ROOT/.env (or .env.default)
+     *
      * @param string $key
      * @param bool $smartTransform - transform boolean values as strings to boolean type values
      * @param string $default
@@ -136,6 +139,7 @@ class Config extends SingletonAbstract implements IConfig
 
     /**
      * Returns config value from CONFIG_ROOT/config directory.
+     *
      * @param $keyPathDotNotation
      * @param string $default
      * @return mixed
@@ -147,6 +151,7 @@ class Config extends SingletonAbstract implements IConfig
          * If your `current-config` want to use `another-config` - you need to wait for it and return null while waiting.
          *
          * Add the next example at the beginning of the config.
+         *
          * @example if (self::$waitFor('current-config', ['env', 'another-config'])) { return null; }
          */
         $keyPathDotNotationParts = explode('.', $keyPathDotNotation);
@@ -225,6 +230,7 @@ class Config extends SingletonAbstract implements IConfig
 
         /**
          * Handle using config in another config.
+         *
          * @see Config::waitFor
          */
         if ($reloadCount > $this->getThresholdNestingNumber()) {
@@ -270,6 +276,7 @@ class Config extends SingletonAbstract implements IConfig
 
     /**
      * Transform boolean values as strings to boolean type values.
+     *
      * @param $value
      * @return bool
      */
