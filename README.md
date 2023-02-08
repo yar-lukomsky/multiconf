@@ -75,7 +75,9 @@ return [
 `{CONFIG_ROOT}/config/a-first-config.php`
 ```php
 <?php
-$multiConf = new EveInUa\MultiConf\Config();
+$multiConf = new \EveInUa\MultiConf\Config(); // version 1
+$multiConf = new \MultiConf(); // version 2
+$multiConf = \MultiConf::instance(); // version 3 - best
 
 // Wait for `example2` to load:
 if ($multiConf->waitFor('a-first-config', ['env', 'example2'])) { return null; }
@@ -95,7 +97,7 @@ return [
 define('CONFIG_ROOT', __DIR__); // optional, will use DOCUMENT_ROOT instead
 define('ENV_ROOT', __DIR__); // optional, will use DOCUMENT_ROOT instead
 require_once __DIR__ . '/vendor/autoload.php';
-$multiConf = new EveInUa\MultiConf\Config();
+$multiConf = \MultiConf::instance();
 $result = [
     $multiConf->env(),                  // DEV       - from ENV_ROOT/.env
     $multiConf->env('DB_HOST'),         // localhost - from ENV_ROOT/.env
