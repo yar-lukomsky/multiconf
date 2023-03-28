@@ -186,10 +186,12 @@ class Config extends SingletonAbstract implements IConfig
             if (in_array($configFile, self::$loadedDefaultConfigs)) continue;
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') > 0) continue;
             $isPhp = substr($configFile, -4) == '.php';
+            $filePath = $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            if (is_dir($filePath)) continue; // TODO: allow config from folders as nested.
             if ($isPhp) {
-            $configHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+                $configHere = include $filePath;
             } else {
-                $configHere = file_get_contents($this->clearPath(CONFIG_ROOT . '/config/' . $configFile));
+                $configHere = file_get_contents($filePath);
             }
             if (is_null($configHere)) {
                 $count++;
@@ -212,10 +214,12 @@ class Config extends SingletonAbstract implements IConfig
             if (in_array($configFile, self::$loadedOverrideConfigs)) continue;
             if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
             $isPhp = substr($configFile, -4) == '.php';
+            $filePath = $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+            if (is_dir($filePath)) continue; // TODO: allow config from folders as nested.
             if ($isPhp) {
-            $configDefaultHere = include $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
+                $configDefaultHere = include $filePath;
             } else {
-                $configDefaultHere = file_get_contents($this->clearPath(CONFIG_ROOT . '/config/' . $configFile));
+                $configDefaultHere = file_get_contents($filePath);
             }
             if (is_null($configDefaultHere)) {
                 $count++;
