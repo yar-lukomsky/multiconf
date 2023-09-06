@@ -2,7 +2,7 @@
 
 namespace EveInUa\MultiConf;
 
-use \Exception;
+use Exception;
 
 class Config extends SingletonAbstract implements IConfig
 {
@@ -10,7 +10,7 @@ class Config extends SingletonAbstract implements IConfig
     const ENV_FILE_IS_NOT_FOUND = '.env file is not found.';
     const ENV_DEFAULT_FILE_IS_NOT_FOUND = '.env.default file is not found.';
     const CONFIG_KEY_IS_NOT_FOUND = 'Config key `%s` of path `%s` is not found.';
-    const CONFIG_DIR_IS_NOT_FOUND = 'Config folder is not found.';
+    const ERROR_UNSUPPORTED_CONFIG_TYPE = 'Unsupported config type.';
     const ERROR_TOO_MANY_NESTING = 'Too many config nesting.';
 
     const CONFIG_DEFAULT_VALUE = 'ecb902b728093cd0c652cfa78bdd8c97';
@@ -18,11 +18,12 @@ class Config extends SingletonAbstract implements IConfig
     const CONFIG_NESTING_THRESHOLD = 10;
 
     private static $init = false;
-    private static $env;
-    private static $config;
+
+    private static $env = null;
+    private static $config = null;
+
     private static $waitList = [];
-    private static $loadedDefaultConfigs = [];
-    private static $loadedOverrideConfigs = [];
+    private static $loadedConfigNames = [];
 
     /**
      * Config constructor.
@@ -85,14 +86,15 @@ class Config extends SingletonAbstract implements IConfig
     }
 
     /**
+     * @param bool $forceReload
      * @throws Exception
      */
     public function init($forceReload = false)
     {
-        if (!self::$env || $forceReload) {
+        if (!$this->isEnvLoaded() || $forceReload) {
             $this->initEnv();
         }
-        if (!self::$config || $forceReload) {
+        if (!$this->isConfigLoaded() || $forceReload) {
             $this->initConfig();
         }
     }
@@ -136,12 +138,14 @@ class Config extends SingletonAbstract implements IConfig
         } else {
             throw new Exception(self::ENV_DEFAULT_FILE_IS_NOT_FOUND);
         }
+
+        return true;
     }
 
     /**
      * Returns config value from CONFIG_ROOT/config directory.
      *
-     * @param $keyPathDotNotation
+     * @param string $keyPathDotNotation
      * @param string $default
      * @return mixed
      * @throws Exception only if $keyPathDotNotation is not found (use $default to prevent throw)
@@ -157,11 +161,11 @@ class Config extends SingletonAbstract implements IConfig
          */
         $keyPathDotNotationParts = explode('.', $keyPathDotNotation);
         if (!self::$config || !(self::$config[reset($keyPathDotNotationParts)] ?? false)) {
-            $this->initConfig();
+            $this->initSpecificConfig(reset($keyPathDotNotationParts));
         }
 
         try {
-            return $this->lodashGet(self::$config, $keyPathDotNotation);
+            return $this->lodashGet(self::$config ?? [], $keyPathDotNotation);
         } catch (Exception $exception) {
             if ($default !== self::CONFIG_DEFAULT_VALUE) {
                 return $default;
@@ -170,7 +174,90 @@ class Config extends SingletonAbstract implements IConfig
         }
     }
 
-    private function initConfig($reloadCount = 0)
+    /**
+     * @param string $name = '{configName}' | 'env'
+     * @return bool
+     * @throws Exception
+     */
+    private function initSpecific($name)
+    {
+        if ($name === 'env') {
+            return $this->isEnvLoaded() || self::initEnv();
+        } else {
+            return $this->isConfigLoaded($name) || self::initSpecificConfig($name);
+        }
+    }
+
+    /**
+     * TODO: allow to load configs from folder
+     *
+     * @param string $configName = 'websites' | 'locale/CUSTOMUSB/en'
+     * @param int $reloadCount - allows to stop looped execution when there is broken config
+     * @return bool
+     * @throws Exception
+     */
+    private function initSpecificConfig($configName, $reloadCount = 0)
+    {
+        if ($this->isConfigLoaded($configName)) {
+            return true;
+        }
+        /**
+         * Handle using config|env in another config.
+         * Stop looped execution when there is broken config.
+         *
+         * @see Config::waitFor
+         */
+        if ($reloadCount > $this->getThresholdNestingNumber()) {
+            throw new \Exception(self::ERROR_TOO_MANY_NESTING);
+        }
+        $configsDirPath = $this->clearPath(CONFIG_ROOT . '/config');
+        if (!file_exists($configsDirPath)) {
+            return false;
+        }
+
+        $configBaseFile = $configsDirPath . '/' . trim($configName, '/');
+        /** @var $configFiles - each next config file override previous values (recursively) */
+        $configFiles = [
+            $configBaseFile . '.default.php',
+            $configBaseFile . '.php',
+            $configBaseFile . '.default.json',
+            $configBaseFile . '.json',
+            # $configBaseFile , // TODO: allow to load configs from folder
+        ];
+
+        while (!empty($configFiles)) {
+            $filePath = array_shift($configFiles);
+            if (!file_exists($filePath)) continue;
+            $isPhp = substr($filePath, -4) == '.php';
+            $isJson = substr($filePath, -5) == '.json';
+            if ($isPhp) {
+                $configArray = include $filePath;
+            } elseif ($isJson) {
+                $configArray = file_get_contents($filePath);
+                $configArray = json_decode($configArray, true);
+            } else {
+                throw new \Exception(self::ERROR_UNSUPPORTED_CONFIG_TYPE);
+            }
+            // INFO: config can return null if it waits for another config:
+            if ($this->hasWaitList($configName)) {
+                $waitList = $this->getWaitList($configName);
+                foreach ($waitList as $waitName) {
+                    $this->initSpecific($waitName);
+                }
+                $this->clearWaitList($configName);
+
+                // INFO: rerun same code if dependecies were not loaded:
+                return $this->initSpecificConfig($configName, $reloadCount + 1);
+            }
+
+            self::$config[$configName] = array_replace_recursive(self::$config[$configName] ?? [], $configArray ?? []);
+        }
+        self::$loadedConfigNames[] = $configName;
+
+        return true;
+    }
+
+    private function initConfig()
     {
         $configFilesPath = $this->clearPath(CONFIG_ROOT . '/config');
         if (!file_exists($configFilesPath)) {
@@ -178,79 +265,13 @@ class Config extends SingletonAbstract implements IConfig
             return;
         }
         $configFiles = scandir($this->clearPath(CONFIG_ROOT . '/config'));
-        $configFilesCount = count($configFiles);
-        // Fetch config.
-        $count = 0;
+
         while (!empty($configFiles)) {
             $configFile = array_shift($configFiles);
-            if (in_array($configFile, self::$loadedDefaultConfigs)) continue;
-            if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') > 0) continue;
-            $isPhp = substr($configFile, -4) == '.php';
-            $filePath = $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
-            if (is_dir($filePath)) continue; // TODO: allow config from folders as nested.
-            if ($isPhp) {
-                $configHere = include $filePath;
-            } else {
-                $configHere = file_get_contents($filePath);
-            }
-            if (is_null($configHere)) {
-                $count++;
-                if ($count < 2 * $configFilesCount) {
-                    $configFiles[] = $configFile;
-                }
-            }
-            $partsHere = explode('.', $configFile);
-            $ext = array_pop($partsHere);
-            $configHere = $ext == 'json' ? json_decode($configHere, true) : $configHere;
-            $keyHere = implode('.', $partsHere);
-            self::$config[$keyHere] = $configHere;
-            self::$loadedDefaultConfigs[] = $configFile;
-        }
-
-        $configFiles = scandir($this->clearPath(CONFIG_ROOT . '/config'));
-        // Merge with default config.
-        while (!empty($configFiles)) {
-            $configFile = array_shift($configFiles);
-            if (in_array($configFile, self::$loadedOverrideConfigs)) continue;
-            if (in_array($configFile, ['.', '..']) || substr_count($configFile, '.default.') == 0) continue;
-            $isPhp = substr($configFile, -4) == '.php';
-            $filePath = $this->clearPath(CONFIG_ROOT . '/config/' . $configFile);
-            if (is_dir($filePath)) continue; // TODO: allow config from folders as nested.
-            if ($isPhp) {
-                $configDefaultHere = include $filePath;
-            } else {
-                $configDefaultHere = file_get_contents($filePath);
-            }
-            if (is_null($configDefaultHere)) {
-                $count++;
-                if ($count < 2 * $configFilesCount) {
-                    $configFiles[] = $configFile;
-                }
-            }
-            $configFile = str_replace('.default.', '.', $configFile);
-            $partsHere = explode('.', $configFile);
-            $ext = array_pop($partsHere);
-            $configDefaultHere = $ext == 'json' ? json_decode($configDefaultHere, true) : $configDefaultHere;
-            $keyHere = implode('.', $partsHere);
-            self::$config[$keyHere] = self::$config[$keyHere] ?? [];
-            self::$config[$keyHere] = array_replace_recursive($configDefaultHere ?? [], self::$config[$keyHere]);
-            self::$loadedOverrideConfigs[] = $configFile;
-        }
-
-        /**
-         * Handle using config in another config.
-         *
-         * @see Config::waitFor
-         */
-        if ($reloadCount > $this->getThresholdNestingNumber()) {
-            throw new \Exception(self::ERROR_TOO_MANY_NESTING);
-        }
-        $hasWaitingConfigs = false;
-        foreach (self::$config as $configValue) {
-            if (is_null($configValue)) $hasWaitingConfigs = true;
-        }
-        if ($hasWaitingConfigs) {
-            $this->initConfig($reloadCount + 1);
+            if (is_dir($configFile)) continue; // TODO: allow to load configs from folder
+            $configName = str_replace(['.php', '.json', '.default',], '', $configFile);
+            if (in_array($configName, self::$loadedConfigNames)) continue;
+            $this->initSpecificConfig($configName);
         }
     }
 
@@ -278,6 +299,10 @@ class Config extends SingletonAbstract implements IConfig
         }
     }
 
+    /**
+     * @param string $path
+     * @return string
+     */
     private function clearPath($path)
     {
         return str_replace('//', '/', $path);
@@ -355,44 +380,104 @@ class Config extends SingletonAbstract implements IConfig
     }
 
     /**
+     * @param string $currentConfigKey
+     * @param array|string $waitForKey
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function waitFor($currentConfigKey, $waitForKey = [])
     {
+        $waitList = is_array($waitForKey) ? $waitForKey : [$waitForKey];
+
         self::$waitList[$currentConfigKey] = self::$waitList[$currentConfigKey] ?? [];
-        self::$waitList[$currentConfigKey] = array_merge(self::$waitList[$currentConfigKey], is_array($waitForKey) ? $waitForKey : [$waitForKey]);
+        self::$waitList[$currentConfigKey] = array_merge(self::$waitList[$currentConfigKey], $waitList);
         self::$waitList[$currentConfigKey] = array_unique(self::$waitList[$currentConfigKey]);
 
         return $this->needWait($currentConfigKey);
     }
 
-    public function getEnvKeys()
+    /**
+     * @param string $configKey
+     * @return bool
+     */
+    public function hasWaitList($configKey)
     {
-        return array_keys(self::$env);
+        return !empty(self::$waitList[$configKey]);
+    }
+
+    /**
+     * @param string $configKey
+     * @return array
+     */
+    public function getWaitList($configKey)
+    {
+        return self::$waitList[$configKey];
+    }
+
+    /**
+     * @param string $configKey
+     * @return void
+     */
+    public function clearWaitList($configKey)
+    {
+        unset(self::$waitList[$configKey]);
+    }
+
+    /**
+     * @param null|string $configKey
+     * @return bool
+     */
+    public function isConfigLoaded($configKey = null)
+    {
+        return is_null($configKey) ? !is_null(self::$config) : in_array($configKey, self::$loadedConfigNames);
     }
 
     /**
      * @return bool
      * @throws \Exception
      */
+    public function isEnvLoaded()
+    {
+        return !is_null(self::$env);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getEnvKeys()
+    {
+        return array_keys(self::$env ?? []);
+    }
+
+    /**
+     * @param string $currentConfigKey
+     * @return bool
+     * @throws Exception
+     */
     private function needWait($currentConfigKey)
     {
         $needWait = false;
         foreach (self::$waitList[$currentConfigKey] as $waitFor) {
             if ($waitFor == 'env') {
-                $needWait = $needWait || is_null(self::$env);
-            } elseif (is_null(self::$config) || is_null(self::$config[$waitFor] ?? null)) {
+                $needWait = $needWait || !$this->isEnvLoaded();
+            } elseif (!$this->isConfigLoaded($waitFor)) {
                 $needWait = true;
             }
+        }
+        if (!$needWait) {
+            $this->clearWaitList($currentConfigKey);
         }
 
         return $needWait;
     }
 
+    /**
+     * @return int
+     * @throws Exception
+     */
     private function getThresholdNestingNumber()
     {
-        return $this->env('CONFIG_NESTING_THRESHOLD', true, self::CONFIG_NESTING_THRESHOLD);
+        return intval($this->env('CONFIG_NESTING_THRESHOLD', true, self::CONFIG_NESTING_THRESHOLD));
     }
 
 }
