@@ -10,9 +10,9 @@ OR
 
 ```json
 {
-    "require": {
-        "eve-in-ua/multiconf": "^v1.0.0"
-    }
+  "require": {
+    "eve-in-ua/multiconf": "^v1.0.0"
+  }
 }
 ```
 
@@ -25,6 +25,7 @@ OR
 ### Env
 
 `{ENV_ROOT}/.env`
+
 ```dotenv
 ENV=DEV
 DB_HOST=localhost
@@ -35,6 +36,7 @@ DB_NAME=database_name
 ```
 
 `{ENV_ROOT}/.env.default`
+
 ```dotenv
 ENV=PROD
 DB_HOST=
@@ -48,6 +50,7 @@ TABLE_PREFIX=
 ### Config
 
 `{CONFIG_ROOT}/config/example.php`
+
 ```php
 <?php
 
@@ -61,8 +64,8 @@ return [
 ];
 ```
 
-
 `{CONFIG_ROOT}/config/example.default.php`
+
 ```php
 <?php
 
@@ -72,7 +75,11 @@ return [
 ];
 ```
 
+`example.php` will recursively override values from `example.default.php` config - so in `example.php` you can specify
+only those configs which you want to override.
+
 `{CONFIG_ROOT}/config/a-first-config.php`
+
 ```php
 <?php
 $multiConf = new \EveInUa\MultiConf\Config(); // version 1
@@ -107,7 +114,9 @@ $result = [
 ];
 var_dump($result);
 ```
+
 Output:
+
 ```
 array(5) {
   [0]=> string(3) "DEV"
