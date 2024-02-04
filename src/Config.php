@@ -298,7 +298,7 @@ class Config extends SingletonAbstract implements IConfig
         }
 
         if (count($pathParts) > 0) {
-            return $this->lodashGet($array[$key], implode('.', $pathParts), $fullPath ?? $path);
+            return $this->lodashGet($array[$key], implode('.', $pathParts), $fullPath ?? $path, $default);
         } else {
             return $array[$key];
         }
