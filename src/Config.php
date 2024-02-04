@@ -10,6 +10,7 @@ class Config extends SingletonAbstract implements IConfig
     const ENV_FILE_IS_NOT_FOUND = '.env file is not found.';
     const ENV_DEFAULT_FILE_IS_NOT_FOUND = '.env.default file is not found.';
     const CONFIG_KEY_IS_NOT_FOUND = 'Config key `%s` of path `%s` is not found.';
+    const CONFIG_KEY_IS_NOT_FOUND_SKIPPED = 'Config key `%s` of path `%s` is not found, default used instead.';
     const ERROR_UNSUPPORTED_CONFIG_TYPE = 'Unsupported config type.';
     const ERROR_TOO_MANY_NESTING = 'Too many config nesting.';
 
@@ -165,7 +166,7 @@ class Config extends SingletonAbstract implements IConfig
         }
 
         try {
-            return $this->lodashGet(self::$config ?? [], $keyPathDotNotation);
+            return $this->lodashGet(self::$config ?? [], $keyPathDotNotation, null, $default);
         } catch (Exception $exception) {
             if ($default !== self::CONFIG_DEFAULT_VALUE) {
                 return $default;
@@ -283,13 +284,17 @@ class Config extends SingletonAbstract implements IConfig
      * @return mixed
      * @throws Exception
      */
-    private function lodashGet($array, $path, $fullPath = null)
+    private function lodashGet($array, $path, $fullPath = null, $default = self::CONFIG_DEFAULT_VALUE)
     {
         $pathParts = explode('.', $path);
         $key = array_shift($pathParts);
 
         if (!isset($array[$key])) {
-            throw new Exception(sprintf(self::CONFIG_KEY_IS_NOT_FOUND, $key, $fullPath ?? $path));
+            if ($default !== self::CONFIG_DEFAULT_VALUE) {
+                throw new Exception(sprintf(self::CONFIG_KEY_IS_NOT_FOUND_SKIPPED, $key, $fullPath ?? $path));
+            } else {
+                throw new Exception(sprintf(self::CONFIG_KEY_IS_NOT_FOUND, $key, $fullPath ?? $path));
+            }
         }
 
         if (count($pathParts) > 0) {
