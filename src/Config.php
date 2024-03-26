@@ -269,7 +269,7 @@ class Config extends SingletonAbstract implements IConfig
 
         while (!empty($configFiles)) {
             $configFile = array_shift($configFiles);
-            if (in_array($configFile, ['.', '..']) || is_dir($configFile)) continue; // TODO: allow to load configs from folder
+            if (in_array($configFile, ['.', '..']) || is_dir($this->clearPath(CONFIG_ROOT . '/config/') . $configFile)) continue; // TODO: allow to load configs from folder
             $configName = str_replace(['.php', '.json', '.default',], '', $configFile);
             if (in_array($configName, self::$loadedConfigNames)) continue;
             $this->initSpecificConfig($configName);
